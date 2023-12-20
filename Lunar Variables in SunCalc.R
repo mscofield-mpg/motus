@@ -2,7 +2,77 @@
 
 setwd()
 library(suncalc)
-Sys.setenv(TZ = "UTC")
+library(lubridate)
+library(dplyr)
+
+#lunar and solar rise and set times#
+#change the date vector to reflect desired date range
+get_moon_times<- function() {
+  Date<-as.Date(as.Date("2020-08-15"):as.Date("2021-01-01"), origin = "1970-01-01")
+
+  moon.time<-getMoonTimes(date = Date, 
+                          lat = 46.7, lon = -113.9, 
+                          data = NULL, 
+                          keep = c("rise", "set"),
+                          tz = "America/Denver",
+                          inUTC = FALSE)
+
+  sun.time<-getSunlightTimes(date = Date, 
+                                lat = 46.7,
+                                lon = -113.9,
+                                data = NULL,
+                                keep = c("sunset", "dusk","nauticalDusk", "nauticalDawn", 
+                                         "dawn", "sunrise"),
+                                tz = "America/Denver")
+
+  Night.dat<-moon.time %>%
+  left_join(sun.time, by = "date")
+
+
+  Night.dat<-rename(Night.dat, moonrise = "rise", moonset = "set")
+  
+  return(Night.dat)
+}
+Night.dat<-get_moon_times()
+
+write.csv(Night.dat, "./Lunar/Moon Data/2020/Moon Times 2020.csv", row.names = FALSE)
+#Pulled into excel, minor manipulation I haven't figured out how to do in R yet
+#re-loaded into R, convert all date time variables back into POSIXct format
+
+Night.dat<- read_csv("./Lunar/Moon Data/2023/Moon Times 2023.csv")
+
+Night.dat <- Night.dat %>%
+  mutate(across(c(moonrise, moonset, sunset, dusk, nauticalDusk, nauticalDawn, dawn, sunrise),
+                ~ as.POSIXct(trimws(.), format = "%m/%d/%y %H:%M"))) 
+Night.dat$date<-as.Date(Night.dat$date, format = "%m/%d/%y")
+
+Night.dat<- Night.dat %>%
+  rename(date_Local = "date")
+
+#Function for illumination and position variables
+#Change time_bin (5 mins, 10 mins, 15 mins, 30 mins, hours etc) as needed in Date.time vector
+get_moon_variables <- function() {
+  Date.time <- seq(ISOdate(2023, 8, 15), ISOdate(2024, 01, 01), "10 mins")
+  
+  moon.ill <- getMoonIllumination(date = Date.time, keep = c("fraction", "phase", "angle"))
+  moon.pos <- getMoonPosition(date = Date.time, lat = 46.7, lon = -113.9, data = NULL, keep = c("altitude", "azimuth", "parallacticAngle"))
+  
+  moon.dat <- moon.ill %>%
+    left_join(moon.pos, by = "date") %>%
+    mutate(date_Local = as.Date(date),
+           time_bin = date)
+  
+  moon.dat <- moon.dat %>%
+    inner_join(Night.dat, by = "date_Local") %>%
+    select(date_Local, time_bin, Night_ID, everything()) %>%
+    select(-lat, -lon, -date)
+  
+  return(moon.dat)
+}
+
+moon.dat <- get_moon_variables()
+
+##OUTDATED VERSIONS BELOW##
 
 #create a vector of dates during time of interest, enter desired time bins (i.e. 'hours")
 date<-seq(ISOdate(2023,6,1), ISOdate(2023,6,30), "hours")
