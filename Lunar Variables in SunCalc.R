@@ -67,7 +67,7 @@ get_moon_variables <- function() {
   
   moon.dat<- moon.dat %>%
     select(time_bin, Night_ID, everything()) %>%
-    select(-date_Local)
+    select(-date)
   
   return(moon.dat)
 }
