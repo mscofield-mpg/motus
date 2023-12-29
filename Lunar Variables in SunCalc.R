@@ -1,3 +1,4 @@
+
 ##Pulling lunar variables using SunCalc package##
 
 setwd()
@@ -46,11 +47,42 @@ Night.dat <- Night.dat %>%
                 ~ as.POSIXct(trimws(.), format = "%m/%d/%y %H:%M"))) 
 Night.dat$date<-as.Date(Night.dat$date, format = "%m/%d/%y")
 
-Night.dat<- Night.dat %>%
-  rename(date_Local = "date")
-
 #Function for illumination and position variables
 #Change time_bin (5 mins, 10 mins, 15 mins, 30 mins, hours etc) as needed in Date.time vector
+get_moon_variables <- function() {
+  Date.time <- seq(ISOdate(2023, 8, 15), ISOdate(2024, 01, 01), "10 mins")
+  
+  moon.ill <- getMoonIllumination(date = Date.time, keep = c("fraction", "phase", "angle"))
+  moon.pos <- getMoonPosition(date = Date.time, lat = 46.7, lon = -113.9, data = NULL, keep = c("altitude", "azimuth", "parallacticAngle"))
+  
+  moon.dat <- moon.ill %>%
+    left_join(moon.pos, by = "date") %>%
+    mutate(time_bin = date) %>%
+    select(-date, -lat, -lon)
+ 
+  moon.dat <- moon.dat %>%
+    mutate(time_bin = force_tz(time_bin, tz = "America/Denver")) %>%
+    left_join(Night.dat, join_by(closest(time_bin >= dusk))) %>%
+    filter(!is.na(Night_ID))
+  
+  moon.dat<- moon.dat %>%
+    select(time_bin, Night_ID, everything()) %>%
+    select(-date_Local)
+  
+  return(moon.dat)
+}
+
+moon.dat <- get_moon_variables()
+
+write.csv(moon.dat, "./Lunar/Moon Data/2023/10min_Moon Variables.csv", row.names = FALSE)
+
+
+#If we want to filter for just the night hours (between dusk and dawn)
+moon.dat2<- moon.dat %>%
+  filter(time_bin >= dusk & time_bin <= dawn)
+
+
+##OUTDATED VERSIONS BELOW##
 get_moon_variables <- function() {
   Date.time <- seq(ISOdate(2023, 8, 15), ISOdate(2024, 01, 01), "10 mins")
   
@@ -72,7 +104,6 @@ get_moon_variables <- function() {
 
 moon.dat <- get_moon_variables()
 
-##OUTDATED VERSIONS BELOW##
 
 #create a vector of dates during time of interest, enter desired time bins (i.e. 'hours")
 date<-seq(ISOdate(2023,6,1), ISOdate(2023,6,30), "hours")
