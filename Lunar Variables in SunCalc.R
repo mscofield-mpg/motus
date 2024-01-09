@@ -47,6 +47,112 @@ Night.dat <- Night.dat %>%
                 ~ as.POSIXct(trimws(.), format = "%m/%d/%y %H:%M"))) 
 Night.dat$date<-as.Date(Night.dat$date, format = "%m/%d/%y")
 
+#Minor edits, needed to split these again so I can manipulate a few moon variables
+Night.moon<- Night.dat %>%
+  select(date, moonrise, moonset)
+
+Night.time<- Night.dat %>%
+  select(Night_ID, sunset, dusk, nauticalDusk, nauticalDawn, dawn, sunrise)
+
+Night.time<- Night.time %>%
+  mutate(night_mins = abs(as.numeric(difftime(dusk, dawn, tz = "America/Denver", units = "mins"))))
+
+##Function to pull numeric lunar variables and join with time variables in time_bins
+#Function for illumination and position variables
+#Change time_bin (5 mins, 10 mins, 15 mins, 30 mins, hours etc) as needed in Date.time vector
+get_moon_variables <- function() {
+  Date.time <- seq(ISOdate(2020, 8, 15), ISOdate(2021, 01, 01), "05 mins")
+  
+  moon.ill <- getMoonIllumination(date = Date.time, keep = c("fraction", "phase", "angle"))
+  moon.pos <- getMoonPosition(date = Date.time, lat = 46.7, lon = -113.9, data = NULL, keep = c("altitude", "azimuth", "parallacticAngle"))
+  
+  moon.dat <- moon.ill %>%
+    left_join(moon.pos, by = "date") %>%
+    mutate(time_bin = date) %>%
+    select(-date, -lat, -lon)
+  
+  moon.dat <- moon.dat %>%
+    mutate(time_bin = force_tz(time_bin, tz = "America/Denver")) %>%
+    left_join(Night.time, join_by(closest(time_bin >= sunset))) %>%
+    filter(time_bin >= sunset & time_bin <= sunrise) %>%
+    filter(!is.na(Night_ID))
+  
+  moon.dat <- moon.dat %>%
+    left_join(Night.moon, join_by(closest(time_bin >= date)))
+  
+  moon.dat <- moon.dat %>%
+    arrange(Night_ID, time_bin) %>%
+    group_by(Night_ID) %>%
+    mutate(tb_position = row_number() - 1) %>%
+    ungroup()
+  
+  moon.dat <- moon.dat %>%
+    select(time_bin, Night_ID, tb_position, everything()) %>%
+    select(-date)
+  
+  return(moon.dat)
+}
+
+
+moon.dat <- get_moon_variables()
+
+##Function for calculating Lunar Availability variables
+
+moon_info <- function(df, time_bin_duration_minutes) {
+  # Initialize columns
+  df$moon_available <- 0
+  df$moon_duration <- 0
+  
+  # Loop through each row in the data frame
+  for (i in 1:nrow(df)) {
+    moonrise_time <- df$moonrise[i]
+    moonset_time <- df$moonset[i]
+    time_bin_start <- df$time_bin[i]
+    time_bin_end <- time_bin_start + (time_bin_duration_minutes * 60)
+    
+    # Check if moon is available during the time_bin
+    if (!is.na(moonrise_time) && !is.na(moonset_time)) {
+      if ((time_bin_start >= moonrise_time && time_bin_end <= moonset_time) ||
+          (time_bin_start <= moonrise_time && time_bin_end >= moonrise_time) ||
+          (time_bin_start <= moonset_time && time_bin_end >= moonset_time)) {
+        df$moon_available[i] <- 1
+      }
+      
+      # Calculate moon duration within the time_bin
+      start_time <- max(time_bin_start, moonrise_time)
+      end_time <- min(time_bin_end, moonset_time)
+      duration_minutes <- as.numeric(difftime(end_time, start_time, units = "mins"))
+      duration_minutes <- max(0, duration_minutes)
+      
+      # Assign the calculated duration to the moon_duration column
+      df$moon_duration[i] <- duration_minutes
+    }
+  }
+  
+  return(df)
+}
+
+# Example usage with a time_bin duration of 5 minutes
+#change time_bin_duration_minutes to length of time_bin (5, 10, 15, or 30 mins)
+moon.dat <- moon_info(moon.dat, time_bin_duration_minutes = 05)
+
+#Lastly, add numeric row_numbers, then select only numeric fields and save for modeling!
+moon.dat<- moon.dat %>%
+  arrange(time_bin) %>%
+  mutate(tb_ID = row_number()) 
+
+moon.numeric<- moon.dat %>%
+  select(Night_ID, tb_ID, tb_position, night_mins, moon_available, moon_duration, fraction, phase, angle,
+         altitude, azimuth, parallacticAngle)
+
+write.csv(moon.dat, "./Lunar/Moon Data/2020/5min_Moon Variables.csv", row.names = FALSE)
+write.csv(moon.numeric, "./Lunar/Moon Data/2020/5min_Numeric_Moon Variables.csv", row.names = FALSE)
+
+
+
+
+
+####OUTDATED VERSIONS BELOW#####
 #Function for illumination and position variables
 #Change time_bin (5 mins, 10 mins, 15 mins, 30 mins, hours etc) as needed in Date.time vector
 get_moon_variables <- function() {
@@ -82,7 +188,7 @@ moon.dat2<- moon.dat %>%
   filter(time_bin >= dusk & time_bin <= dawn)
 
 
-##OUTDATED VERSIONS BELOW##
+#######
 get_moon_variables <- function() {
   Date.time <- seq(ISOdate(2023, 8, 15), ISOdate(2024, 01, 01), "10 mins")
   
