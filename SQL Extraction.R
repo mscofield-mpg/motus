@@ -11,8 +11,8 @@ library(DBI)
 library(RSQLite)
 library(sf)
 library(viridis)
-library(rgdal) #Look into PROJ and GDAL
-library(rgeos) #will want to use library(geos) instead
+library(PROJ)
+library(geos) 
 Sys.setenv(TZ = "UTC")
 source("./Scripts/useful_functions.R") #this file should be loaded from your wd
 
