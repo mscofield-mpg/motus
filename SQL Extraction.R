@@ -1,4 +1,4 @@
-##UPDATED 3.8.2024##
+##UPDATED 4.9.2024##
 ##Function for SQL extraction##
 
 library(tidyverse)
@@ -134,8 +134,8 @@ Filtered_tag_list <- Result$tag.list.fil
 Ambiguous_tags <- Result$tags.ambig
 
 
-write.csv(Detections, file = "Processed Data/SPECIES_tag_detections_UNFILTERED_DATE.csv", row.names = FALSE)
-write.csv(Tag_metadata, file = "Processed Data/SPECIES_tag_dep_metadata_DATE.csv", row.names = FALSE)
+write.csv(Detections, file = "Processed Data/SPECIES/DATE/SPECIES_tag_detections_UNFILTERED_DATE.csv", row.names = FALSE)
+write.csv(Tag_metadata, file = "Processed Data/SPECIES/DATE/SPECIES_tag_dep_metadata_DATE.csv", row.names = FALSE)
 
 #manually check deployments
 deployments<-Detections %>% select(motusTagID, tagDeployID) %>%
@@ -159,7 +159,7 @@ Secondary_Filter<- function(Detections) {
     ungroup()
   
   tags.filt<-tags.detpro %>%
-    mutate(ftemp = ifelse(ptrue > 0.50, 1, 0),
+    mutate(ftemp = ifelse(ptrue > 0.30, 1, 0),
            motusFilter = ftemp) %>%
     filter(ftemp == 1)
   
@@ -189,10 +189,76 @@ Filtered_tag_list<- Filtered_Result$tags.filt.list
 Transit_check<- Filtered_Result$transit.check.suspect
 Connections<- Filtered_Result$tc
 
-write.csv(Filtered_Detections, file = "./Processed Data/SPECIES_tag_detections_FILTERED_DATE.csv", row.names = FALSE)
+write.csv(Filtered_Detections, file = "./Processed Data/SPECIES/DATE/SPECIES_tag_detections_FILTERED_DATE.csv", row.names = FALSE)
 
 
 ##Further manual filtering still needed for possible false ppositives##
+
+##PLOTS##
+#setting the theme for mapping with ggmap
+theme_set(theme_bw())
+world<-ne_countries(scale = "medium", returnclass = "sf")
+
+#to download a shapefile for the first time use this code
+#this directory is set to download into a folder named Map Data in your wd
+#you can change or modify this directory as needed
+lakes<-ne_download(scale = "medium", type = 'lakes', category = 'physical',
+                   returnclass = "sf", destdir = "./Map Data/lakes")
+
+#to load an already downloaded shapefile use this code
+lakes<-ne_load(type = "lakes", scale = "medium" , category = 'physical',
+               returnclass = "sf",
+               destdir = paste0("./Map Data/lakes"))
+
+
+tags.path.filt<-fun.getpath(Filtered_Detections)
+unique_tag_list <- unique(Filtered_tag_list)
+
+for (current_tag in unique_tag_list) {
+  bird <- tags.path.filt %>% filter(motusTagID == current_tag)
+  pbird <- Connections %>% filter(motusTagID == current_tag) %>%
+    distinct()
+  
+  xmin <- min(bird$recvDeployLon, bird$tagDepLon, na.rm = TRUE) - 2
+  xmax <- max(bird$recvDeployLon, bird$tagDepLon, na.rm = TRUE) + 2
+  ymin <- min(bird$recvDeployLat, bird$tagDepLat, na.rm = TRUE) - 1
+  ymax <- max(bird$recvDeployLat, bird$tagDepLat, na.rm = TRUE) + 1
+  
+  filename <- paste("./Figures/Diagnostic Plots/SPECIES/DATE/", current_tag, "-map.png", sep = "")
+  
+  png(filename = filename,
+      width = 8, height = 8, units = "in", res = 600)
+  
+  print(ggplot(data = world) +
+          geom_sf() +
+          geom_sf(data = lakes, fill = "white") +
+          coord_sf(xlim = c(xmin, xmax), ylim = c(ymin, ymax), expand = FALSE) +
+          geom_point(data = bird, aes(recvDeployLon, recvDeployLat, colour = month), alpha = 0.5, size = 5) +
+          geom_segment(data = pbird, aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
+                       linetype = "dashed",
+                       arrow = arrow(angle = 18, type = "closed", length = unit(0.1, "inches"))) +
+          geom_point(data = bird,
+                     aes(tagDepLon, tagDepLat), colour = "red",
+                     shape = 8, size = 4) +
+          scale_color_gradientn(colors = rev(viridis_pal()(12)), limits = c(1, 12)) +
+          ggtitle(paste0("motusTagID:", current_tag)))
+  
+  dev.off()
+}
+###Use Plots for manual filtering##
+
+##
+for (i in 1:length(Filtered_tag_list)){
+  png(filename = paste0("./Figures/Diagnostic Plots/SPECIES/DATE/Signal Strength Plots", "sigstrength-",
+                        Filtered_tag_list[i], ".png"),
+      width = 11, height = 7.5, units = "in", res=600)
+  print(plotTagSig_mod(Filtered_Detections, motusTagID = Filtered_tag_list[i]))
+  dev.off()
+}
+rm(i)
+
+
+
 
 
 
