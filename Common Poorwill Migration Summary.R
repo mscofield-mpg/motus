@@ -8,7 +8,7 @@ library(ggplot2)
 library(viridis)
 
 ####Data Prep####
-depart.key<- read_csv("./Lunar/COPO/Migration Movement/4.16.24/COPO_tag key_4.16.24.csv")
+depart.key<- read_csv("~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/COPO/R data/COPO_tag key_4.16.24.csv")
 
 depart.key<-depart.key %>%
   mutate(Ranch_DepartureDate = as.Date(Ranch_DepartureDate, format = "%m/%d/%y"),
