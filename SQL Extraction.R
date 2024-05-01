@@ -1,4 +1,4 @@
-##UPDATED 4.9.2024##
+##UPDATED 5.1.2024##
 ##Function for SQL extraction##
 
 library(tidyverse)
@@ -134,8 +134,8 @@ Filtered_tag_list <- Result$tag.list.fil
 Ambiguous_tags <- Result$tags.ambig
 
 
-write.csv(Detections, file = "Processed Data/SPECIES/DATE/SPECIES_tag_detections_UNFILTERED_DATE.csv", row.names = FALSE)
-write.csv(Tag_metadata, file = "Processed Data/SPECIES/DATE/SPECIES_tag_dep_metadata_DATE.csv", row.names = FALSE)
+write.csv(Detections, file = "~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Processed Detection Data/SPECIES/DATE/SPECIES_tag_detections_UNFILTERED_DATE.csv", row.names = FALSE)
+write.csv(Tag_metadata, file = "~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Processed Detection Data/SPECIES/DATE/SPECIES_tag_dep_metadata_DATE.csv", row.names = FALSE)
 
 #manually check deployments
 deployments<-Detections %>% select(motusTagID, tagDeployID) %>%
@@ -189,10 +189,10 @@ Filtered_tag_list<- Filtered_Result$tags.filt.list
 Transit_check<- Filtered_Result$transit.check.suspect
 Connections<- Filtered_Result$tc
 
-write.csv(Filtered_Detections, file = "./Processed Data/SPECIES/DATE/SPECIES_tag_detections_FILTERED_DATE.csv", row.names = FALSE)
+write.csv(Filtered_Detections, file = ".~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Processed Detection Data/SPECIES/DATE/SPECIES_tag_detections_prefiltered_DATE.csv", row.names = FALSE)
 
 
-##Further manual filtering still needed for possible false ppositives##
+###Further manual filtering still needed for possible false ppositives###
 
 ##PLOTS##
 #setting the theme for mapping with ggmap
@@ -245,7 +245,6 @@ for (current_tag in unique_tag_list) {
   
   dev.off()
 }
-###Use Plots for manual filtering##
 
 ##
 for (i in 1:length(Filtered_tag_list)){
@@ -259,7 +258,7 @@ rm(i)
 
 
 
-
+####See species specific manual filtering script for process###
 
 
 
