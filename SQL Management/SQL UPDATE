@@ -1,0 +1,24 @@
+####SQL UPDATE SCRIPT####
+  ##Motus on Avian Science Egnyte##
+  ##Updated 5.1.24##
+
+#set working directory to Motus folder on Egnyte#
+setwd("~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/SQL")
+
+#Load required packages#
+library(motus)
+library(RSQLite)
+
+#Run UPDATE command#
+  #Use forceMeta = TRUE each time to ensure all recvMeta and tagMeta is up to date#
+  #If server times out (can happen if internet is interrupted, computer goes to sleep, or the server is inaccessible)
+    #run the UPDATE command again, it will pick up where it left off as long as you haven't logged out of your session#
+sql.motus<- tagme(projRecv = 213, new = FALSE, update = TRUE, forceMeta =  TRUE)
+
+#You will be prompted to enter your motus login username#
+username
+#Followed by your motus login password#
+password
+
+#Once the update is complete, use the logout command to end the session
+motusLogout()
