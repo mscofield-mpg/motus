@@ -68,7 +68,7 @@ Moon_Times_2024 <- Moon_Times_2024 %>%
 #Define Activity_Function with proper time interval handling
   #Modify bin length to desired time in minutes
 Activity_Function <- function(COPO.act, Bin_Length = "1 min", Activity_Threshold, Moon_Times_2024) {
-  # Step 1: Process Activity Data
+  
   activity_table <- COPO.act %>%
     mutate(time_bin = floor_date(ts_LocalTime, unit = Bin_Length)) %>%
     group_by(mfgID, time_bin, recvName, port) %>%
@@ -82,14 +82,14 @@ Activity_Function <- function(COPO.act, Bin_Length = "1 min", Activity_Threshold
     mutate(State = Activity_Threshold(sd_sig)) %>%
     ungroup()
   
-  # Step 2: Join with Moon_Times_2024
+ 
   activity_table <- activity_table %>%
     fuzzy_left_join(Moon_Times_2024,
                     by = c("time_bin" = "Night_Start", "time_bin" = "Night_End"),
                     match_fun = list(`>=`, `<=`)) %>%
     select(mfgID, Night_ID, time_bin, everything(), -date_Local, -date, -Night_Start, -Night_End)
   
-  # Step 3: Assign Day/Night Status
+ 
   activity_table <- activity_table %>%
     mutate(Temp = case_when(
       (time_bin >= sunset  & time_bin < sunrise ) ~ "Night",
