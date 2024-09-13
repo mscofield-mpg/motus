@@ -109,7 +109,7 @@ Date<-as.Date(as.Date("2023-08-15"):as.Date("2024-01-02"), origin = "1970-01-01"
 Night.dat<-get_moon_times(Date)
 
 #save as csv
-write.csv(Night.dat, "./Lunar/Moon Data/2023/Moon Times 2023.csv", row.names = FALSE)
+write.csv(Night.dat, "~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Projects/COPO_Lunar Breeding Season/Data Tables/Moon Times 2024.csv", row.names = FALSE)
 
 #Pulled into excel, minor manipulations I haven't figured out how to do in R yet
   #added Night_ID
@@ -118,7 +118,7 @@ write.csv(Night.dat, "./Lunar/Moon Data/2023/Moon Times 2023.csv", row.names = F
 #save as csv
 
 #Read in adjusted Night variables after Excel modifications
-Night.dat<- read_csv("./Lunar/Moon Data/2023/Moon Times 2023.csv")
+Night.dat<- read_csv("~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Projects/COPO_Lunar Breeding Season/Data Tables/Moon Times 2024.csv")
 
 #reformat date time variables
 Night.dat <- Night.dat %>%
@@ -155,8 +155,8 @@ moon.numeric<- moon.dat %>%
          altitude, azimuth, parallacticAngle)
 
 #save both tables as csv
-write.csv(moon.dat, "./Lunar/Moon Data/2023/30min_Moon Variables.csv", row.names = FALSE)
-write.csv(moon.numeric, "./Lunar/Moon Data/2023/30min_Numeric_Moon Variables.csv", row.names = FALSE)
+write.csv(moon.dat, "~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Projects/COPO_Lunar Breeding Season/Data Tables/30min Moon Variables 2024.csv", row.names = FALSE)
+write.csv(moon.numeric, "~/Library/CloudStorage/Egnyte-mpgcloud/Shared/Workspace/Teams/Avian Science/Motus/Project 213 Data/Projects/COPO_Lunar Breeding Season/Data Tables/30min Numeric Moon Variables 2024.csv", row.names = FALSE)
 
 
 
